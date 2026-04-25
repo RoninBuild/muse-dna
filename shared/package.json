@@ -1,3 +1,10 @@
 {
-  "type": "module"
+  "name": "@muse/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "https-proxy-agent": "^9.0.0",
+    "undici": "^8.1.0"
+  }
 }
