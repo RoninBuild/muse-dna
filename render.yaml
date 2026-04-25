@@ -1,43 +1,44 @@
-## Render Blueprint — Muse DNA
+## Render Blueprint — Muse DNA (single-service free tier)
 ## Docs: https://render.com/docs/blueprint-spec
 ##
-## Деплоит:
-##   - PostgreSQL 16 (managed DB)
-##   - backend (Express + Socket.io)
-##   - agent-strategy, agent-fast-search, agent-copywriter, agent-image
+## Topology:
+##   - 1× free Postgres
+##   - 1× free web service running backend + 4 agent processes in one
+##     container (see scripts/start-all-in-one.mjs)
 ##
-## Фронтенд деплоится отдельно на Vercel (см. vercel.json).
+## Why one service instead of five: Render's `starter` plan is $7/mo per
+## service ($35/mo total for the 5-service version). The all-in-one launcher
+## fits inside one free web service — agents bind to loopback ports
+## 3101-3104 and the backend uses `http://localhost:31xx/execute` to call
+## them, so no public URLs are needed for the agent fleet.
 ##
-## Использование:
-##   1. Создай новый Blueprint на render.com → New → Blueprint
-##   2. Укажи этот репозиторий
-##   3. Render сам создаст все сервисы и свяжет DATABASE_URL
-##   4. Добавь секреты в Environment Groups (см. ниже список)
+## Trade-off: free tier sleeps after 15 min idle (~30s cold start on next
+## hit). Acceptable for a hackathon demo where judges click around for
+## 5-15 min in a single session. Bump to `starter` (per-service) for prod.
+##
+## Frontend deploys separately on Vercel (see vercel.json).
 
 databases:
   - name: muse-postgres
     databaseName: muse
     user: muse
-    plan: free          # поменяй на "starter" ($7/mo) для продакшена
-    region: oregon      # frankfurt если нужна Европа
+    plan: free
+    region: oregon
 
 services:
-
-  # ── Backend ────────────────────────────────────────────────────────────────
   - type: web
     name: muse-backend
     runtime: docker
-    dockerfilePath: backend/Dockerfile
+    dockerfilePath: Dockerfile
     dockerContext: .
-    plan: starter       # Socket.io требует persistent connection — free не подходит
+    plan: free
     region: oregon
     healthCheckPath: /health
-    # Socket.io + долгие Gemini вызовы — поднимаем таймаут
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3001
+      # PORT is auto-injected by Render. The backend reads it; agents
+      # bind to fixed loopback ports inside the container.
       - key: DATABASE_URL
         fromDatabase:
           name: muse-postgres
@@ -68,209 +69,28 @@ services:
         value: "true"
       - key: MUSE_PUBLIC_HISTORY
         value: "true"
-      # Agent URLs — Render внутренние URL (без интернета, быстрее)
+      # Agent URLs — loopback to in-container processes. The all-in-one
+      # launcher binds these on the same container's localhost.
       - key: STRATEGY_AGENT_URL
-        value: https://muse-agent-strategy.onrender.com/execute
+        value: http://127.0.0.1:3101/execute
       - key: FAST_SEARCH_AGENT_URL
-        value: https://muse-agent-fast-search.onrender.com/execute
+        value: http://127.0.0.1:3102/execute
       - key: COPYWRITER_AGENT_URL
-        value: https://muse-agent-copywriter.onrender.com/execute
+        value: http://127.0.0.1:3103/execute
       - key: IMAGE_AGENT_URL
-        value: https://muse-agent-image.onrender.com/execute
-      # ── Секреты (добавь вручную в Render Dashboard → Environment) ──
+        value: http://127.0.0.1:3104/execute
+      # ── Secrets — paste these into Render Dashboard → Environment ──
       - key: GEMINI_API_KEY
         sync: false
       - key: AIMLAPI_API_KEY
         sync: false
       - key: FEATHERLESS_API_KEY
         sync: false
-      - key: CIRCLE_API_KEY
-        sync: false
-      - key: CIRCLE_ENTITY_SECRET
+      - key: FIREWORKS_API_KEYS
         sync: false
       - key: MUSE_BUYER_PRIVATE_KEY
         sync: false
       - key: MUSE_ADMIN_TOKEN
         sync: false
-      - key: MUSE_WALLET_ENC_MASTER_KEY
-        sync: false
-      - key: BRAVE_API_KEY
-        sync: false
       - key: NEXT_PUBLIC_APP_URL
-        sync: false   # укажи URL твоего Vercel деплоя, например https://muse-dna.vercel.app
-
-  # ── Agent: Strategy ────────────────────────────────────────────────────────
-  - type: web
-    name: muse-agent-strategy
-    runtime: docker
-    dockerfilePath: agents/strategy/Dockerfile
-    dockerContext: .
-    plan: starter
-    region: oregon
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3101
-      - key: SERVICE_NAME
-        value: senior_strategy
-      - key: MOCK_X402
-        value: "false"
-      - key: REQUIRE_X402_CHALLENGE
-        value: "true"
-      - key: ARC_RPC_URL
-        value: https://rpc.blockdaemon.testnet.arc.network
-      - key: GATEWAY_API_BASE_URL
-        value: https://gateway-api-testnet.circle.com/v1
-      - key: X402_FACILITATOR_URL
-        value: https://x402.org/facilitator
-      - key: ARC_EXPLORER_TX_BASE
-        value: https://testnet.arcscan.app/tx
-      - key: USDC_CONTRACT
-        value: "0x3600000000000000000000000000000000000000"
-      - key: MUSE_REQUIRE_SIWE
-        value: "false"
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: AIMLAPI_API_KEY
-        sync: false
-      - key: FEATHERLESS_API_KEY
-        sync: false
-      - key: MUSE_ADMIN_TOKEN
-        sync: false
-      - key: STRATEGY_AGENT_WALLET
-        sync: false   # адрес кошелька агента на Arc Testnet
-
-  # ── Agent: Fast Search ────────────────────────────────────────────────────
-  - type: web
-    name: muse-agent-fast-search
-    runtime: docker
-    dockerfilePath: agents/fast-search/Dockerfile
-    dockerContext: .
-    plan: starter
-    region: oregon
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3102
-      - key: SERVICE_NAME
-        value: fast_search
-      - key: MOCK_X402
-        value: "false"
-      - key: REQUIRE_X402_CHALLENGE
-        value: "true"
-      - key: ARC_RPC_URL
-        value: https://rpc.blockdaemon.testnet.arc.network
-      - key: GATEWAY_API_BASE_URL
-        value: https://gateway-api-testnet.circle.com/v1
-      - key: X402_FACILITATOR_URL
-        value: https://x402.org/facilitator
-      - key: ARC_EXPLORER_TX_BASE
-        value: https://testnet.arcscan.app/tx
-      - key: USDC_CONTRACT
-        value: "0x3600000000000000000000000000000000000000"
-      - key: MUSE_REQUIRE_SIWE
-        value: "false"
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: AIMLAPI_API_KEY
-        sync: false
-      - key: FEATHERLESS_API_KEY
-        sync: false
-      - key: MUSE_ADMIN_TOKEN
-        sync: false
-      - key: BRAVE_API_KEY
-        sync: false
-      - key: FAST_SEARCH_WALLET
-        sync: false
-
-  # ── Agent: Copywriter ─────────────────────────────────────────────────────
-  - type: web
-    name: muse-agent-copywriter
-    runtime: docker
-    dockerfilePath: agents/copywriter/Dockerfile
-    dockerContext: .
-    plan: starter
-    region: oregon
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3103
-      - key: SERVICE_NAME
-        value: copywriter
-      - key: MOCK_X402
-        value: "false"
-      - key: REQUIRE_X402_CHALLENGE
-        value: "true"
-      - key: ARC_RPC_URL
-        value: https://rpc.blockdaemon.testnet.arc.network
-      - key: GATEWAY_API_BASE_URL
-        value: https://gateway-api-testnet.circle.com/v1
-      - key: X402_FACILITATOR_URL
-        value: https://x402.org/facilitator
-      - key: ARC_EXPLORER_TX_BASE
-        value: https://testnet.arcscan.app/tx
-      - key: USDC_CONTRACT
-        value: "0x3600000000000000000000000000000000000000"
-      - key: MUSE_REQUIRE_SIWE
-        value: "false"
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: AIMLAPI_API_KEY
-        sync: false
-      - key: FEATHERLESS_API_KEY
-        sync: false
-      - key: MUSE_ADMIN_TOKEN
-        sync: false
-      - key: COPY_AGENT_WALLET
-        sync: false
-
-  # ── Agent: Image ──────────────────────────────────────────────────────────
-  - type: web
-    name: muse-agent-image
-    runtime: docker
-    dockerfilePath: agents/image/Dockerfile
-    dockerContext: .
-    plan: starter
-    region: oregon
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3104
-      - key: SERVICE_NAME
-        value: image
-      - key: MOCK_X402
-        value: "false"
-      - key: REQUIRE_X402_CHALLENGE
-        value: "true"
-      - key: ARC_RPC_URL
-        value: https://rpc.blockdaemon.testnet.arc.network
-      - key: GATEWAY_API_BASE_URL
-        value: https://gateway-api-testnet.circle.com/v1
-      - key: X402_FACILITATOR_URL
-        value: https://x402.org/facilitator
-      - key: ARC_EXPLORER_TX_BASE
-        value: https://testnet.arcscan.app/tx
-      - key: USDC_CONTRACT
-        value: "0x3600000000000000000000000000000000000000"
-      - key: MUSE_REQUIRE_SIWE
-        value: "false"
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: AIMLAPI_API_KEY
-        sync: false
-      - key: FEATHERLESS_API_KEY
-        sync: false
-      - key: MUSE_ADMIN_TOKEN
-        sync: false
-      - key: FAL_API_KEY
-        sync: false
-      - key: IMAGE_AGENT_WALLET
         sync: false
