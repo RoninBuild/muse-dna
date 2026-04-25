@@ -94,3 +94,16 @@ services:
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         sync: false
+      # Agent wallet addresses — the x402 facilitator returns these as
+      # the `payTo` field in 402 challenges, so each agent process can
+      # only run when its own wallet is registered. Generate via
+      # `scripts/create_agent_wallets.mjs` or reuse the canonical four
+      # from the hackathon stress-test artifact.
+      - key: STRATEGY_AGENT_WALLET
+        sync: false
+      - key: FAST_SEARCH_WALLET
+        sync: false
+      - key: COPY_AGENT_WALLET
+        sync: false
+      - key: IMAGE_AGENT_WALLET
+        sync: false
