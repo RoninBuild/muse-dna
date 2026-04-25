@@ -1,8 +1,13 @@
 ## All-in-one Dockerfile — runs backend + 4 agent services in a single
 ## container. Used for cost-conscious deployments (Render free tier, etc).
 ## See scripts/start-all-in-one.mjs for the in-container topology.
+##
+## Node 22 is REQUIRED — undici@8 (transitive via viem) calls
+## `webidl.util.markAsUncloneable` which only exists in Node 22+. With
+## node:20 the agents crash on import with `TypeError: ... is not a
+## function` and the launcher tears the container down.
 
-FROM node:20-alpine
+FROM node:22-alpine
 
 ENV NODE_ENV=production
 WORKDIR /app
