@@ -1,0 +1,40 @@
+{
+  "name": "muse-dna",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "agents/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c magenta,cyan \"npm run dev --workspace @muse/frontend\" \"npm run dev --workspace @muse/backend\"",
+    "dev:agents": "concurrently -n strategy,fast,copy,image -c yellow,green,blue,red \"npm run dev --workspace @muse/strategy-agent\" \"npm run dev --workspace @muse/fast-search-agent\" \"npm run dev --workspace @muse/copywriter-agent\" \"npm run dev --workspace @muse/image-agent\"",
+    "dev:full": "concurrently -n frontend,backend,strategy,fast,copy,image -c magenta,cyan,yellow,green,blue,red \"npm run dev --workspace @muse/frontend\" \"npm run dev --workspace @muse/backend\" \"npm run dev --workspace @muse/strategy-agent\" \"npm run dev --workspace @muse/fast-search-agent\" \"npm run dev --workspace @muse/copywriter-agent\" \"npm run dev --workspace @muse/image-agent\"",
+    "dev:full:stable": "concurrently -n frontend,backend,strategy,fast,copy,image -c magenta,cyan,yellow,green,blue,red \"npm run serve:stable --workspace @muse/frontend\" \"npm run dev --workspace @muse/backend\" \"npm run dev --workspace @muse/strategy-agent\" \"npm run dev --workspace @muse/fast-search-agent\" \"npm run dev --workspace @muse/copywriter-agent\" \"npm run dev --workspace @muse/image-agent\"",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "verify:phase3": "node scripts/phase3-smoke.mjs",
+    "verify:phase5": "node scripts/phase5-e2e.mjs",
+    "verify:wallet-flow": "node scripts/verify-wallet-flow.mjs",
+    "simulate": "node scripts/simulate-full-cycle.mjs",
+    "verify:live-hackathon": "node scripts/live-hackathon-proof.mjs",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down -v"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "playwright": "^1.59.1"
+  },
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^10.3.0",
+    "@circle-fin/x402-batching": "^2.1.0",
+    "@x402/core": "^2.10.0",
+    "@x402/evm": "^2.10.0",
+    "axios": "^1.15.1",
+    "https-proxy-agent": "^9.0.0",
+    "tsx": "^4.21.0",
+    "undici": "^8.1.0",
+    "viem": "^2.48.1"
+  }
+}

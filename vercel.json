@@ -1,0 +1,26 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build --workspace @muse/frontend",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "npm ci --workspaces --if-present",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://muse-backend.onrender.com/api/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_ARC_CHAIN_ID": "5042002",
+    "NEXT_PUBLIC_ARC_RPC_URL": "https://rpc.testnet.arc.network"
+  }
+}

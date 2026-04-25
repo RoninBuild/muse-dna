@@ -1,0 +1,12 @@
+{
+  "watch": ["index.js", "routes", "services", "db", "middleware"],
+  "ext": "js,mjs",
+  "ignore": [
+    "data/**",
+    "node_modules/**",
+    "logs/**",
+    "*.test.js",
+    "data/orchestrator-wallets.json"
+  ],
+  "delay": 500
+}

@@ -1,0 +1,214 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-muse}
+      POSTGRES_USER: ${POSTGRES_USER:-muse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-muse}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-muse} -d ${POSTGRES_DB:-muse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    command: ["hermes", "webapi", "--host", "0.0.0.0", "--port", "8642"]
+    ports:
+      - "8642:8642"
+    environment:
+      # P3-4: use /data/hermes as a neutral mount point (no user-home
+      # dependency). Both hermes and backend mount hermes_data here.
+      HERMES_HOME: /data/hermes
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    volumes:
+      - hermes_data:/data/hermes
+
+  agent-strategy:
+    build:
+      context: .
+      dockerfile: agents/strategy/Dockerfile
+    ports:
+      - "3101:3101"
+    environment:
+      PORT: 3101
+      SERVICE_NAME: senior_strategy
+      MOCK_X402: ${MOCK_X402:-false}
+      MOCK_X402_SEED: ${MOCK_X402_SEED:-muse-local-demo}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://x402.org/facilitator}
+      GATEWAY_API_BASE_URL: ${GATEWAY_API_BASE_URL:-https://gateway-api-testnet.circle.com/v1}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      USDC_CONTRACT: ${USDC_CONTRACT:-0x3600000000000000000000000000000000000000}
+      USDC_TOKEN_ADDRESS: ${USDC_TOKEN_ADDRESS:-0x3600000000000000000000000000000000000000}
+      STRATEGY_AGENT_WALLET: ${STRATEGY_AGENT_WALLET:-0xAAA0000000000000000000000000000000000000}
+      ARC_EXPLORER_TX_BASE: ${ARC_EXPLORER_TX_BASE:-https://testnet.arcscan.app/tx}
+      ARC_BLOCKCHAIN: ${ARC_BLOCKCHAIN:-ARC-TESTNET}
+      HERMES_URL: http://hermes:8642
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIMLAPI_API_KEY: ${AIMLAPI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+      MUSE_ADMIN_TOKEN: ${MUSE_ADMIN_TOKEN:-}
+      MUSE_WALLET_ENC_MASTER_KEY: ${MUSE_WALLET_ENC_MASTER_KEY:-}
+      MUSE_REQUIRE_SIWE: ${MUSE_REQUIRE_SIWE:-false}
+      FIREWORKS_API_KEYS: ${FIREWORKS_API_KEYS:-}
+
+  agent-fast-search:
+    build:
+      context: .
+      dockerfile: agents/fast-search/Dockerfile
+    ports:
+      - "3102:3102"
+    environment:
+      PORT: 3102
+      SERVICE_NAME: fast_search
+      MOCK_X402: ${MOCK_X402:-false}
+      MOCK_X402_SEED: ${MOCK_X402_SEED:-muse-local-demo}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://x402.org/facilitator}
+      GATEWAY_API_BASE_URL: ${GATEWAY_API_BASE_URL:-https://gateway-api-testnet.circle.com/v1}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      USDC_CONTRACT: ${USDC_CONTRACT:-0x3600000000000000000000000000000000000000}
+      USDC_TOKEN_ADDRESS: ${USDC_TOKEN_ADDRESS:-0x3600000000000000000000000000000000000000}
+      FAST_SEARCH_WALLET: ${FAST_SEARCH_WALLET:-0xBBB0000000000000000000000000000000000000}
+      ARC_EXPLORER_TX_BASE: ${ARC_EXPLORER_TX_BASE:-https://testnet.arcscan.app/tx}
+      ARC_BLOCKCHAIN: ${ARC_BLOCKCHAIN:-ARC-TESTNET}
+      BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+      HERMES_URL: http://hermes:8642
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIMLAPI_API_KEY: ${AIMLAPI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+      MUSE_ADMIN_TOKEN: ${MUSE_ADMIN_TOKEN:-}
+      MUSE_WALLET_ENC_MASTER_KEY: ${MUSE_WALLET_ENC_MASTER_KEY:-}
+      MUSE_REQUIRE_SIWE: ${MUSE_REQUIRE_SIWE:-false}
+      FIREWORKS_API_KEYS: ${FIREWORKS_API_KEYS:-}
+
+  agent-copywriter:
+    build:
+      context: .
+      dockerfile: agents/copywriter/Dockerfile
+    ports:
+      - "3103:3103"
+    environment:
+      PORT: 3103
+      SERVICE_NAME: copywriter
+      MOCK_X402: ${MOCK_X402:-false}
+      MOCK_X402_SEED: ${MOCK_X402_SEED:-muse-local-demo}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://x402.org/facilitator}
+      GATEWAY_API_BASE_URL: ${GATEWAY_API_BASE_URL:-https://gateway-api-testnet.circle.com/v1}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      USDC_CONTRACT: ${USDC_CONTRACT:-0x3600000000000000000000000000000000000000}
+      USDC_TOKEN_ADDRESS: ${USDC_TOKEN_ADDRESS:-0x3600000000000000000000000000000000000000}
+      COPY_AGENT_WALLET: ${COPY_AGENT_WALLET:-0xCCC0000000000000000000000000000000000000}
+      ARC_EXPLORER_TX_BASE: ${ARC_EXPLORER_TX_BASE:-https://testnet.arcscan.app/tx}
+      ARC_BLOCKCHAIN: ${ARC_BLOCKCHAIN:-ARC-TESTNET}
+      HERMES_URL: http://hermes:8642
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIMLAPI_API_KEY: ${AIMLAPI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+      MUSE_ADMIN_TOKEN: ${MUSE_ADMIN_TOKEN:-}
+      MUSE_WALLET_ENC_MASTER_KEY: ${MUSE_WALLET_ENC_MASTER_KEY:-}
+      MUSE_REQUIRE_SIWE: ${MUSE_REQUIRE_SIWE:-false}
+      FIREWORKS_API_KEYS: ${FIREWORKS_API_KEYS:-}
+
+  agent-image:
+    build:
+      context: .
+      dockerfile: agents/image/Dockerfile
+    ports:
+      - "3104:3104"
+    environment:
+      PORT: 3104
+      SERVICE_NAME: image
+      MOCK_X402: ${MOCK_X402:-false}
+      MOCK_X402_SEED: ${MOCK_X402_SEED:-muse-local-demo}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://x402.org/facilitator}
+      GATEWAY_API_BASE_URL: ${GATEWAY_API_BASE_URL:-https://gateway-api-testnet.circle.com/v1}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      USDC_CONTRACT: ${USDC_CONTRACT:-0x3600000000000000000000000000000000000000}
+      USDC_TOKEN_ADDRESS: ${USDC_TOKEN_ADDRESS:-0x3600000000000000000000000000000000000000}
+      IMAGE_AGENT_WALLET: ${IMAGE_AGENT_WALLET:-0xDDD0000000000000000000000000000000000000}
+      ARC_EXPLORER_TX_BASE: ${ARC_EXPLORER_TX_BASE:-https://testnet.arcscan.app/tx}
+      ARC_BLOCKCHAIN: ${ARC_BLOCKCHAIN:-ARC-TESTNET}
+      FAL_API_KEY: ${FAL_API_KEY:-}
+      FAL_API_URL: ${FAL_API_URL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIMLAPI_API_KEY: ${AIMLAPI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+      MUSE_ADMIN_TOKEN: ${MUSE_ADMIN_TOKEN:-}
+      MUSE_WALLET_ENC_MASTER_KEY: ${MUSE_WALLET_ENC_MASTER_KEY:-}
+      MUSE_REQUIRE_SIWE: ${MUSE_REQUIRE_SIWE:-false}
+      FIREWORKS_API_KEYS: ${FIREWORKS_API_KEYS:-}
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-muse}:${POSTGRES_PASSWORD:-muse}@postgres:5432/${POSTGRES_DB:-muse}
+      HERMES_URL: http://hermes:8642
+      HERMES_HOME: /data/hermes
+      HERMES_SKILLS_DIR: /data/hermes/skills
+      MOCK_X402: ${MOCK_X402:-false}
+      MOCK_X402_SEED: ${MOCK_X402_SEED:-muse-local-demo}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://x402.org/facilitator}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      ARC_CHAIN_ID: ${ARC_CHAIN_ID:-5042002}
+      GATEWAY_API_BASE_URL: ${GATEWAY_API_BASE_URL:-https://gateway-api-testnet.circle.com/v1}
+      ARC_BLOCKCHAIN: ${ARC_BLOCKCHAIN:-ARC-TESTNET}
+      USDC_CONTRACT: ${USDC_CONTRACT:-0x3600000000000000000000000000000000000000}
+      USDC_TOKEN_ADDRESS: ${USDC_TOKEN_ADDRESS:-0x3600000000000000000000000000000000000000}
+      ARC_EXPLORER_TX_BASE: ${ARC_EXPLORER_TX_BASE:-https://testnet.arcscan.app/tx}
+      ORCHESTRATOR_WALLET_ID: ${ORCHESTRATOR_WALLET_ID:-}
+      ORCHESTRATOR_WALLET_ADDRESS: ${ORCHESTRATOR_WALLET_ADDRESS:-0xFEE0000000000000000000000000000000000000}
+      ORCHESTRATOR_PRIVATE_KEY: ${ORCHESTRATOR_PRIVATE_KEY:-}
+      AGENT_WALLET_SET_ID: ${AGENT_WALLET_SET_ID:-}
+      CIRCLE_API_KEY: ${CIRCLE_API_KEY:-}
+      CIRCLE_ENTITY_SECRET: ${CIRCLE_ENTITY_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AIMLAPI_API_KEY: ${AIMLAPI_API_KEY:-}
+      FEATHERLESS_API_KEY: ${FEATHERLESS_API_KEY:-}
+      MUSE_BUYER_PRIVATE_KEY: ${MUSE_BUYER_PRIVATE_KEY:-}
+      MUSE_ADMIN_TOKEN: ${MUSE_ADMIN_TOKEN:-}
+      MUSE_WALLET_ENC_MASTER_KEY: ${MUSE_WALLET_ENC_MASTER_KEY:-}
+      MUSE_REQUIRE_SIWE: ${MUSE_REQUIRE_SIWE:-false}
+      FIREWORKS_API_KEYS: ${FIREWORKS_API_KEYS:-}
+      STRATEGY_AGENT_URL: http://agent-strategy:3101/execute
+      FAST_SEARCH_AGENT_URL: http://agent-fast-search:3102/execute
+      COPYWRITER_AGENT_URL: http://agent-copywriter:3103/execute
+      IMAGE_AGENT_URL: http://agent-image:3104/execute
+    volumes:
+      - hermes_data:/data/hermes
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hermes:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:3000
+      BACKEND_INTERNAL_URL: http://backend:3001
+      NEXT_PUBLIC_ARC_CHAIN_ID: ${NEXT_PUBLIC_ARC_CHAIN_ID:-5042002}
+      NEXT_PUBLIC_ARC_RPC_URL: ${NEXT_PUBLIC_ARC_RPC_URL:-https://rpc.testnet.arc.network}
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  hermes_data:

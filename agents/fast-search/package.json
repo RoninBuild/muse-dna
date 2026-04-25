@@ -1,0 +1,15 @@
+{
+  "name": "@muse/fast-search-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('fast-search build not required')\"",
+    "test": "node -e \"console.log('fast-search tests arrive in Phase 3')\""
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@muse/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port 3000",
+    "serve:stable": "npm run build && npm run start",
+    "test": "node -e \"console.log('frontend tests arrive in Phase 4')\""
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.76.1",
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "socket.io-client": "^4.8.1",
+    "viem": "^2.29.2",
+    "wagmi": "^2.15.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "typescript": "^5.8.3"
+  }
+}

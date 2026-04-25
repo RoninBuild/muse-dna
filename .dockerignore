@@ -1,0 +1,50 @@
+.git
+.gitignore
+.github
+
+# Secrets — must never end up in an image layer
+.env
+.env.*
+*.pem
+*.key
+
+# Per-user orchestrator privkeys + DNA analytics annotations live under
+# backend/data/. Both are LOCAL state — copying them into a Docker image
+# would (1) leak production user privkeys across containers, (2) baseline
+# every redeployed container with stale DNA feedback that doesn't belong
+# to it. The container should mount its own volume here at runtime.
+backend/data
+**/backend/data
+data/orchestrator-wallets.json
+
+# Local node modules / build outputs
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+coverage
+**/coverage
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# Runtime artefacts
+logs
+**/logs
+artifacts
+**/artifacts
+postgres-data
+
+# Tooling / editor
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+
+# Docs / design notes — never ship markdown into containers
+*.md
+!frontend/README.md
+.design-handoff
+.claude

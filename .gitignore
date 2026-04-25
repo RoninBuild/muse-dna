@@ -1,0 +1,47 @@
+node_modules/
+.next/
+coverage/
+dist/
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+frontend/.next/
+backend/node_modules/
+frontend/node_modules/
+agents/*/node_modules/
+postgres-data/
+artifacts/
+data/
+# Contains per-user orchestrator private keys — never commit.
+orchestrator-wallets.json
+
+# Local Claude Design handoff bundle (kept out of git; intent lives in the chat).
+.design-handoff/
+
+# Per-process logs (anything under logs/, not just *.log). Contains stack
+# traces, prompts, and the occasional 64-hex test artifact that LOOKS like
+# a private key — keep the whole tree local.
+logs/
+
+# Claude Code project state (settings, worktrees, scheduled-tasks lock).
+.claude/
+
+# Local IDE / editor state.
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS junk.
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Personal notes / planning docs that don't belong in a public repo.
+# README.md is fine; anything else *.md at the repo root is treated as a
+# scratch document and stays local.
+/*.md
+!/README.md
